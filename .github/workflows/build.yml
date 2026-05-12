@@ -36,10 +36,10 @@ jobs:
       # Crear ejecutable .exe
       - name: 🛠️ Build .exe with PyInstaller
         run: |
-          pyinstaller ^
-            --onefile ^
-            --windowed ^
-            --name SnakeMVC ^
+          pyinstaller `
+            --onefile `
+            --windowed `
+            --name SnakeMVC `
             main.py
 
       # Subir artifact
