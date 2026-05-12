@@ -1,0 +1,115 @@
+name: Build Executables
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+
+  # =========================================
+  # WINDOWS BUILD (.EXE)
+  # =========================================
+  windows-build:
+    runs-on: windows-latest
+
+    steps:
+
+      # Clonar repositorio
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      # Configurar Python
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Instalar dependencias
+      - name: 📦 Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install PySide6 pyinstaller
+
+      # Crear ejecutable .exe
+      - name: 🛠️ Build .exe with PyInstaller
+        run: |
+          pyinstaller ^
+            --onefile ^
+            --windowed ^
+            --name SnakeMVC ^
+            main.py
+
+      # Subir artifact
+      - name: 📤 Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SnakeMVC-Windows
+          path: dist/SnakeMVC.exe
+
+
+  # =========================================
+  # LINUX BUILD (.DEB)
+  # =========================================
+  linux-build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # Clonar repositorio
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      # Configurar Python
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Instalar dependencias
+      - name: 📦 Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install PySide6 pyinstaller
+
+      # Generar ejecutable Linux
+      - name: 🛠️ Build Linux executable
+        run: |
+          pyinstaller \
+            --onefile \
+            --windowed \
+            --name SnakeMVC \
+            main.py
+
+      # Crear estructura del paquete .deb
+      - name: 📁 Create DEB package structure
+        run: |
+          mkdir -p SnakeMVC_1.0/usr/local/bin
+          mkdir -p SnakeMVC_1.0/DEBIAN
+
+          cp dist/SnakeMVC SnakeMVC_1.0/usr/local/bin/
+
+      # Crear archivo control
+      - name: 📝 Create DEBIAN control file
+        run: |
+          echo "Package: snakemvc" > SnakeMVC_1.0/DEBIAN/control
+          echo "Version: 1.0" >> SnakeMVC_1.0/DEBIAN/control
+          echo "Section: games" >> SnakeMVC_1.0/DEBIAN/control
+          echo "Priority: optional" >> SnakeMVC_1.0/DEBIAN/control
+          echo "Architecture: amd64" >> SnakeMVC_1.0/DEBIAN/control
+          echo "Maintainer: Yoel Rozada" >> SnakeMVC_1.0/DEBIAN/control
+          echo "Description: Snake game developed with PySide6 following MVC architecture" >> SnakeMVC_1.0/DEBIAN/control
+
+      # Generar paquete .deb
+      - name: 📦 Build .deb package
+        run: |
+          dpkg-deb --build SnakeMVC_1.0
+
+      # Subir artifact
+      - name: 📤 Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SnakeMVC-Linux
+          path: SnakeMVC_1.0.deb
